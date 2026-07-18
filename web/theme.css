@@ -1,0 +1,35 @@
+/* 
+    ==========================================================================
+    AbiLang Color Hunt Palette #1a2a80 Theme Variables (Cosmic Lavender Theme)
+    ========================================================================== 
+*/
+
+body {
+    --bg-app: #090014;
+    --bg-pane: #15082b;
+    --border-color: #32225a;
+
+    --vue-green: #7bff00;
+    --vue-dark-blue: #8f5cff;
+    --vue-cyan: #00eaff;
+    --vue-rose: #ff4fd8;
+
+    --text-main: #ffffff;
+    --text-muted: #b6add3;
+    --btn-text: #090014;
+}
+
+body.light-theme {
+    --bg-app: #f3f0ff;
+    --bg-pane: #fcfbff;
+    --border-color: #d4c8ff;
+
+    --vue-green: #4CAF50;
+    --vue-dark-blue: #6d28d9;
+    --vue-cyan: #00cfff;
+    --vue-rose: #ff4fcf;
+
+    --text-main: #23124f;
+    --text-muted: #75669f;
+    --btn-text: #ffffff;
+}
