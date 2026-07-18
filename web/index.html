@@ -102,22 +102,21 @@
                         <div class="cmd-group">
                             <span class="cmd-label">Option A: One-Click Automated Installer (Recommended)</span>
                             <pre><code># Fetch and execute bash auto-installer script
-curl -fsSL https://raw.githubusercontent.com/abinashmofficial/abilang/main/install.sh | bash</code></pre>
+curl -fsSL https://raw.githubusercontent.com/abinashmofficial/abilang/master-v1/install.sh | bash</code></pre>
                             <span class="cmd-desc">Or run locally: <code>chmod +x install.sh && ./install.sh</code></span>
                         </div>
                         <div class="cmd-group">
                             <span class="cmd-label">Option B: Manual Compilation & Global CLI Installation</span>
                             <pre><code># 1. Clone repo, enter folder & install dependencies
-git clone https://github.com/abinashmofficial/abilang.git && cd abilang && npm install
+git clone https://github.com/abinashmofficial/abilang/master-v1/install.sh && cd abilang && npm install
 
 # 2. Compile TypeScript binary & register global terminal alias
-npm run build
-npm link</code></pre>
+npm run web
+</code></pre>
                         </div>
                         <div class="cmd-group">
                             <span class="cmd-label">3. Run Globally from Anywhere</span>
-                            <pre><code># Launch interactive REPL console
-abi
+                            <pre><code># Launch interactive REPL console abi
 
 # Run an external script file
 abi path/to/script.vue</code></pre>
