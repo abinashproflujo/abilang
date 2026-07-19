@@ -195,8 +195,8 @@ for file in cli.js index.js interpreter.js lexer.js parser.js types.js; do
     curl -fsSL "$BASE_URL/dist/$file" -o "dist/$file"
 done
 
-# 5. Create view/index.html (landing portal only)
-cat << 'EOF' > view/index.html
+# 5. Create layout components (header, footer, index)
+cat << 'EOF' > view/header.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -215,8 +215,6 @@ cat << 'EOF' > view/index.html
         <span id="theme-toggle-icon">☀</span>
     </button>
 
-    
-    
     <!-- View State 1: Landing Page Portal -->
     <div id="portal-view" class="portal-screen">
         <!-- Navbar Header -->
@@ -228,6 +226,10 @@ cat << 'EOF' > view/index.html
                 </div>
             </div>
         </nav>
+EOF
+
+cat << 'EOF' > view/index.html
+@include("header.html")
 
         <!-- Main Hero Section -->
         <main class="portal-hero">
@@ -260,7 +262,11 @@ cat << 'EOF' > view/index.html
                 </div>
             </div>
         </main>
-    
+
+@include("footer.html")
+EOF
+
+cat << 'EOF' > view/footer.html
         <!-- Footer -->
         <footer class="hud-footer">
             <span><a href="#" id="view-portal-link" style="color: var(--vue-green); text-decoration: none;">View Landing Portal</a></span>
@@ -315,6 +321,19 @@ const mimeTypes = {
     '.svg': 'image/svg+xml'
 };
 
+function renderTemplate(filePath) {
+    if (!fs.existsSync(filePath)) {
+        return `<!-- Template Error: File not found: ${filePath} -->`;
+    }
+    let content = fs.readFileSync(filePath, 'utf8');
+    const includeRegex = /@include\(['"]([^'"]+)['"]\)/g;
+    content = content.replace(includeRegex, (match, subPath) => {
+        const includePath = path.resolve(path.dirname(filePath), subPath);
+        return renderTemplate(includePath);
+    });
+    return content;
+}
+
 class ServerIO {
     print(msg) {}
     async input(prompt) { return ""; }
@@ -363,8 +382,19 @@ async function startServer() {
                 const viewFile = await controllerFunc.call(interpreter, []);
                 const filePath = path.join(__dirname, viewFile);
                 if (fs.existsSync(filePath)) {
+                    let content = fs.readFileSync(filePath, 'utf8');
+                    if (!content.trim().toLowerCase().startsWith('<!doctype html>') && !content.trim().toLowerCase().startsWith('<html')) {
+                        const headerPath = path.join(__dirname, 'view/header.html');
+                        const footerPath = path.join(__dirname, 'view/footer.html');
+                        if (fs.existsSync(headerPath)) {
+                            content = fs.readFileSync(headerPath, 'utf8') + content;
+                        }
+                        if (fs.existsSync(footerPath)) {
+                            content = content + fs.readFileSync(footerPath, 'utf8');
+                        }
+                    }
                     res.writeHead(200, { 'Content-Type': 'text/html' });
-                    res.end(fs.readFileSync(filePath));
+                    res.end(content);
                     return;
                 }
             }
