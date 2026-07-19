@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="style.css?v=1.2">
 </head>
 <body>
-    <!-- Theme Switcher floating top right -->
+    <canvas id="star-rain-canvas"></canvas>
     <button id="theme-toggle" class="theme-toggle-floating" title="Toggle Light/Dark Theme">
         <span id="theme-toggle-icon">☀</span>
     </button>
@@ -266,7 +266,12 @@ await interpreter.interpret(statements);</code></pre>
                     <div class="line-gutter" id="line-numbers">
                         <div>1</div>
                     </div>
-                    <textarea id="editor" spellcheck="false" autocomplete="off" placeholder="Write AbiLang code here..."></textarea>
+                    <div class="editor-wrapper">
+                        <div id="editor-backdrop">
+                            <pre id="editor-highlight" aria-hidden="true"><code id="highlighting-content"></code></pre>
+                        </div>
+                        <textarea id="editor" spellcheck="false" autocomplete="off" placeholder="Write AbiLang code here..."></textarea>
+                    </div>
                 </div>
             </section>
 

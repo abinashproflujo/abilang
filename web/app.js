@@ -133,11 +133,39 @@ const tabContents = document.querySelectorAll(".tab-content");
 const astContainer = document.getElementById("ast-container");
 const variablesContainer = document.getElementById("variables-container");
 
-// Initialize Default Template
+function highlightAbiLang(code) {
+    let html = code
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    const tokenRegex = /(#(?:.*)$|\/\/(?:.*)$)|(".*?"|'.*?')|(\b(?:if|else|while|return|func)\b)|(\b(?:and|or|not)\b)|(\b(?:true|false|null)\b)|(\b(?:print|input|fetch|json_parse|create_text|create_button|create_column|create_row|render_ui|draw_screen)\b)|(\b[a-zA-Z_][a-zA-Z0-9_]*\b(?=\s*\())|(\b\d+(?:\.\d+)?\b)/gm;
+
+    html = html.replace(tokenRegex, (match, comment, string, keyword, logical, constant, builtin, funcName, number) => {
+        if (comment) return `<span class="token-comment">${match}</span>`;
+        if (string) return `<span class="token-string">${match}</span>`;
+        if (keyword) return `<span class="token-keyword">${match}</span>`;
+        if (logical) return `<span class="token-logical">${match}</span>`;
+        if (constant) return `<span class="token-constant">${match}</span>`;
+        if (builtin) return `<span class="token-builtin">${match}</span>`;
+        if (funcName) return `<span class="token-function">${match}</span>`;
+        if (number) return `<span class="token-number">${match}</span>`;
+        return match;
+    });
+
+    return html;
+}
+
+function updateHighlighting() {
+    const highlightContent = document.getElementById("highlighting-content");
+    if (highlightContent) {
+        highlightContent.innerHTML = highlightAbiLang(editor.value) + "\n";
+    }
+}
+
 editor.value = templates.hello;
 updateLineNumbers();
-
-// 1. Line Numbers & Tab Indents Setup
+updateHighlighting();
 function updateLineNumbers() {
     const lines = editor.value.split("\n");
     lineNumbers.innerHTML = "";
@@ -148,10 +176,18 @@ function updateLineNumbers() {
     }
 }
 
-editor.addEventListener("input", updateLineNumbers);
+editor.addEventListener("input", () => {
+    updateLineNumbers();
+    updateHighlighting();
+});
 
 editor.addEventListener("scroll", () => {
     lineNumbers.scrollTop = editor.scrollTop;
+    const backdrop = document.getElementById("editor-backdrop");
+    if (backdrop) {
+        backdrop.scrollTop = editor.scrollTop;
+        backdrop.scrollLeft = editor.scrollLeft;
+    }
 });
 
 editor.addEventListener("keydown", (e) => {
@@ -162,6 +198,7 @@ editor.addEventListener("keydown", (e) => {
         editor.value = editor.value.substring(0, start) + "    " + editor.value.substring(end);
         editor.selectionStart = editor.selectionEnd = start + 4;
         updateLineNumbers();
+        updateHighlighting();
     }
 });
 
@@ -187,6 +224,7 @@ templateButtons.forEach(btn => {
         if (templates[templateKey]) {
             editor.value = templates[templateKey];
             updateLineNumbers();
+            updateHighlighting();
             const fileName = btn.textContent.trim().replace(/^V\s*/, "");
             appendSystemMessage(`Loaded component template: ${fileName}`);
         }
@@ -667,11 +705,65 @@ if (viewPortalLink && portalView && hudView) {
         portalView.classList.remove("glitch-fade-out");
     });
 }
- // Loading screen hide after DOM ready
- window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', () => {
   const loadingAnim = document.querySelector('.loading-anim');
   if (loadingAnim) {
     loadingAnim.classList.add('loaded');
     setTimeout(() => loadingAnim.remove(), 600);
   }
 });
+
+const canvas = document.getElementById("star-rain-canvas");
+if (canvas) {
+    const ctx = canvas.getContext("2d");
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    window.addEventListener("resize", () => {
+        width = (canvas.width = window.innerWidth);
+        height = (canvas.height = window.innerHeight);
+    });
+
+    const stars = [];
+
+    function createStar() {
+        return {
+            x: Math.random() * width,
+            y: Math.random() * -height,
+            length: Math.random() * 80 + 20,
+            speed: Math.random() * 15 + 5,
+            opacity: Math.random() * 0.6 + 0.2,
+            width: Math.random() * 1.5 + 0.5
+        };
+    }
+
+    for (let i = 0; i < 40; i++) {
+        stars.push(createStar());
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        const isLight = document.body.classList.contains("light-theme");
+        const starColor = isLight ? "109, 40, 217" : "123, 255, 0";
+        for (let i = 0; i < stars.length; i++) {
+            const s = stars[i];
+            ctx.beginPath();
+            const gradient = ctx.createLinearGradient(s.x, s.y, s.x - s.length * 0.5, s.y + s.length);
+            gradient.addColorStop(0, `rgba(${starColor}, 0)`);
+            gradient.addColorStop(1, `rgba(${starColor}, ${s.opacity})`);
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = s.width;
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(s.x - s.length * 0.2, s.y + s.length);
+            ctx.stroke();
+            s.x -= s.speed * 0.2;
+            s.y += s.speed;
+            if (s.y > height || s.x < 0) {
+                stars[i] = createStar();
+                stars[i].y = -20;
+            }
+        }
+        requestAnimationFrame(animate);
+    }
+    animate();
+}

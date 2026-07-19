@@ -2,9 +2,38 @@
 set -e
 
 if ! command -v node &> /dev/null; then
+    echo "Error: Node.js is required to install AbiLang." >&2
     exit 1
 fi
 
+# Helper function to prompt user for input (handles interactive and non-interactive cases)
+prompt_user() {
+    local prompt_msg="$1"
+    local default_val="$2"
+    local result_var="$3"
+    local input_val
+    
+    if [ -c /dev/tty ]; then
+        read -p "$prompt_msg" input_val < /dev/tty
+    else
+        read -p "$prompt_msg" input_val || true
+    fi
+    
+    if [ -z "$input_val" ]; then
+        eval "$result_var=\"$default_val\""
+    else
+        eval "$result_var=\"$input_val\""
+    fi
+}
+
+# 1. Ask for project name
+prompt_user "Enter project name [my-abi-project]: " "my-abi-project" PROJECT_NAME
+
+# Create and navigate to the project directory
+mkdir -p "$PROJECT_NAME"
+cd "$PROJECT_NAME"
+
+# Create folder structure
 mkdir -p dist
 mkdir -p assets
 mkdir -p view
@@ -12,13 +41,132 @@ mkdir -p controller
 mkdir -p model
 mkdir -p routes
 
+# 2. Ask if they want to configure environment variables (.env)
+prompt_user "Do you want to configure environment variables (.env)? (y/n) [y]: " "y" CREATE_ENV
+
+if [[ "$CREATE_ENV" =~ ^[Yy]$ ]]; then
+    prompt_user "Enter PORT [3000]: " "3000" PORT
+    
+    prompt_user "Do you want to configure database details? (y/n) [y]: " "y" CONFIGURE_DB
+    
+    DATABASE_TYPE=""
+    DATABASE_URL=""
+    
+    if [[ "$CONFIGURE_DB" =~ ^[Yy]$ ]]; then
+        if [ -c /dev/tty ]; then
+            echo "" > /dev/tty
+            echo "Select Database Type:" > /dev/tty
+            echo "1) mysql" > /dev/tty
+            echo "2) postgres" > /dev/tty
+            echo "3) mongodb" > /dev/tty
+            echo "4) supabase" > /dev/tty
+            echo "5) sqlite" > /dev/tty
+            echo "6) sqlite3" > /dev/tty
+        else
+            echo ""
+            echo "Select Database Type:"
+            echo "1) mysql"
+            echo "2) postgres"
+            echo "3) mongodb"
+            echo "4) supabase"
+            echo "5) sqlite"
+            echo "6) sqlite3"
+        fi
+        
+        prompt_user "Enter choice (1-6) [3]: " "3" DB_CHOICE
+        
+        case $DB_CHOICE in
+            1)
+                DATABASE_TYPE="mysql"
+                prompt_user "Enter DB_HOST [localhost]: " "localhost" DB_HOST
+                prompt_user "Enter DB_PORT [3306]: " "3306" DB_PORT
+                prompt_user "Enter DB_DATABASE [proflujo_academy]: " "proflujo_academy" DB_DATABASE
+                prompt_user "Enter DB_USERNAME [proflujo]: " "proflujo" DB_USERNAME
+                prompt_user "Enter DB_PASSWORD [letmein1!]: " "letmein1!" DB_PASSWORD
+                DEFAULT_URL="mysql://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE"
+                ;;
+            2)
+                DATABASE_TYPE="postgres"
+                prompt_user "Enter DB_HOST [localhost]: " "localhost" DB_HOST
+                prompt_user "Enter DB_PORT [5432]: " "5432" DB_PORT
+                prompt_user "Enter DB_DATABASE [proflujo_academy]: " "proflujo_academy" DB_DATABASE
+                prompt_user "Enter DB_USERNAME [proflujo]: " "proflujo" DB_USERNAME
+                prompt_user "Enter DB_PASSWORD [letmein1!]: " "letmein1!" DB_PASSWORD
+                DEFAULT_URL="postgres://$DB_USERNAME:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE"
+                ;;
+            3)
+                DATABASE_TYPE="mongodb"
+                DEFAULT_URL="mongodb://localhost:27017/$PROJECT_NAME"
+                ;;
+            4)
+                DATABASE_TYPE="supabase"
+                DEFAULT_URL="postgresql://postgres:password@db.supabase.co:5432/postgres"
+                ;;
+            5)
+                DATABASE_TYPE="sqlite"
+                DEFAULT_URL="sqlite://database.db"
+                ;;
+            6)
+                DATABASE_TYPE="sqlite3"
+                DEFAULT_URL="sqlite3://database.db"
+                ;;
+            *)
+                DATABASE_TYPE="mongodb"
+                DEFAULT_URL="mongodb://localhost:27017/$PROJECT_NAME"
+                ;;
+        esac
+        
+        if [ "$DATABASE_TYPE" != "postgres" ] && [ "$DATABASE_TYPE" != "mysql" ]; then
+            prompt_user "Enter DATABASE_URL [$DEFAULT_URL]: " "$DEFAULT_URL" DATABASE_URL
+        fi
+    fi
+    
+    prompt_user "Enter API_KEY [xyz123secret]: " "xyz123secret" API_KEY
+    
+    # Generate default uppercase APP_NAME matching project name
+    APP_NAME=$(echo "$PROJECT_NAME" | tr '[:lower:]' '[:upper:]')
+    
+    # Write .env file
+    {
+        echo "PORT=$PORT"
+        echo "APP_NAME=$APP_NAME"
+        if [ "$DATABASE_TYPE" = "postgres" ]; then
+            echo "DB_CONNECTION=pgsql"
+            echo "DB_HOST=$DB_HOST"
+            echo "DB_PORT=$DB_PORT"
+            echo "DB_DATABASE=$DB_DATABASE"
+            echo "DB_USERNAME=$DB_USERNAME"
+            echo "DB_PASSWORD=$DB_PASSWORD"
+        elif [ "$DATABASE_TYPE" = "mysql" ]; then
+            echo "DB_CONNECTION=mysql"
+            echo "DB_HOST=$DB_HOST"
+            echo "DB_PORT=$DB_PORT"
+            echo "DB_DATABASE=$DB_DATABASE"
+            echo "DB_USERNAME=$DB_USERNAME"
+            echo "DB_PASSWORD=$DB_PASSWORD"
+        elif [ -n "$DATABASE_TYPE" ]; then
+            echo "DATABASE_TYPE=\"$DATABASE_TYPE\""
+            echo "DATABASE_URL=\"$DATABASE_URL\""
+        fi
+        echo "API_KEY=$API_KEY"
+    } > .env
+    
+    if [ -c /dev/tty ]; then
+        echo ".env file created successfully!" > /dev/tty
+    else
+        echo ".env file created successfully!"
+    fi
+fi
+
+# Base repository URL
 BASE_URL="https://raw.githubusercontent.com/abinashmofficial/abilang/master-v1"
 
-cat << 'EOF' > package.json
+# 3. Create package.json
+cat << EOF > package.json
 {
-  "name": "abilang",
+  "name": "$PROJECT_NAME",
   "version": "1.0.0",
-  "description": "The Progressive Scripting Language",
+  "description": "The Progressive Scripting Language Project",
   "main": "dist/index.js",
   "bin": {
     "abi": "./dist/cli.js"
@@ -32,81 +180,24 @@ cat << 'EOF' > package.json
 }
 EOF
 
+# 4. Download source binary components
 for file in cli.js index.js interpreter.js lexer.js parser.js types.js; do
     curl -fsSL "$BASE_URL/dist/$file" -o "dist/$file"
 done
 
-cat << 'EOF' > view/index.html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AbiLang - The Progressive Scripting Language</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/theme.css?v=1.2">
-    <link rel="stylesheet" href="../assets/style.css?v=1.2">
-</head>
-<body>
-    <button id="theme-toggle" class="theme-toggle-floating" title="Toggle Light/Dark Theme">
-        <span id="theme-toggle-icon">☀</span>
-    </button>
+# 5. Download the complete web index.html and update asset paths for view/index.html
+curl -fsSL "$BASE_URL/web/index.html" -o view/index.html
+node -e '
+const fs = require("fs");
+let html = fs.readFileSync("view/index.html", "utf8");
+html = html.replace("href=\"theme.css?v=1.2\"", "href=\"../assets/theme.css?v=1.2\"");
+html = html.replace("href=\"style.css?v=1.2\"", "href=\"../assets/style.css?v=1.2\"");
+html = html.replace("src=\"dist/abilang.min.js?v=1.2\"", "src=\"../assets/abilang.min.js?v=1.2\"");
+html = html.replace("src=\"app.js?v=1.2\"", "src=\"../assets/app.js?v=1.2\"");
+fs.writeFileSync("view/index.html", html, "utf8");
+'
 
-    <div id="portal-view" class="portal-screen">
-        <nav class="portal-nav">
-            <div class="nav-container">
-                <div class="nav-logo">
-                    <div class="abi-logo-badge">A</div>
-                    <span class="nav-title">Abi<span>Lang</span></span>
-                </div>
-            </div>
-        </nav>
-
-        <main class="portal-hero">
-            <div class="hero-container">
-                <div class="hologram-overlay"></div>
-                <div class="mockup-container" style="text-align:center; margin: 20px 0;">
-                    <div class="dash-circle">
-                        <div class="dash-text">Abi</div>
-                    </div>
-                </div>
-
-                <div class="tagline-badge">AbiLang v1.1.0 (Cloud Release)</div>
-                <h1 class="hero-title">
-                    The Progressive <br>
-                    <span>Scripting Language</span>
-                </h1>
-                <p class="hero-subtitle">
-                    An approachable, highly performant and versatile scripting language designed for <strong>Abinash</strong>, running natively on all platform engines.
-                </p>
-                <div class="hero-actions">
-                    <button id="launch-btn" class="btn btn-vue-primary">
-                        Get Started
-                        <svg class="icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                            <polyline points="12 5 19 12 12 19"></polyline>
-                        </svg>
-                    </button>
-                    <a href="file:///var/www/personal/new-lang/README.md" target="_blank" class="btn btn-vue-secondary">View Docs</a>
-                </div>
-            </div>
-        </main>
-
-        <footer class="hud-footer">
-            <span><a href="#" id="view-portal-link" style="color: var(--vue-green); text-decoration: none;">View Landing Portal</a></span>
-            <span>Progressive Language Platform</span>
-            <span>Made for Abinash</span>
-        </footer>
-    </div>
-
-    <script src="../assets/abilang.min.js?v=1.2"></script>
-    <script src="../assets/app.js?v=1.2"></script>
-</body>
-</html>
-EOF
-
+# 6. Create custom server.js supporting .env configuration
 cat << 'EOF' > server.js
 const http = require('http');
 const fs = require('fs');
@@ -114,6 +205,26 @@ const path = require('path');
 const { Interpreter, BuiltinFunction } = require('./dist/interpreter');
 const { Lexer } = require('./dist/lexer');
 const { Parser } = require('./dist/parser');
+
+// Load environment variables from .env file if it exists
+const envFile = path.resolve('.env');
+if (fs.existsSync(envFile)) {
+    const envContent = fs.readFileSync(envFile, 'utf8');
+    envContent.split(/\r?\n/).forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+            const parts = trimmed.split('=');
+            if (parts.length >= 2) {
+                const key = parts[0].trim();
+                let val = parts.slice(1).join('=').trim();
+                if ((val.startsWith("\"") && val.endsWith("\"")) || (val.startsWith("\x27") && val.endsWith("\x27"))) {
+                    val = val.substring(1, val.length - 1);
+                }
+                process.env[key] = val;
+            }
+        }
+    });
+}
 
 const routes = [];
 const mimeTypes = {
@@ -185,8 +296,9 @@ async function startServer() {
         res.end('Not Found');
     });
 
-    server.listen(8080, '127.0.0.1', () => {
-        console.log('Server running at http://127.0.0.1:8080/');
+    const PORT = process.env.PORT || 8080;
+    server.listen(PORT, '127.0.0.1', () => {
+        console.log(`Server running at http://127.0.0.1:${PORT}/`);
     });
 }
 
@@ -196,6 +308,7 @@ startServer().catch(err => {
 });
 EOF
 
+# 7. Create routing components
 cat << 'EOF' > controller/controller.abi
 func index() {
     return "view/index.html"
@@ -213,14 +326,17 @@ include("controller/controller.abi")
 route("get", "/", "controller@index", "home")
 EOF
 
+# 8. Download design assets (CSS, JS, layout etc.)
 curl -fsSL "$BASE_URL/web/app.js" -o assets/app.js
 curl -fsSL "$BASE_URL/web/style.css" -o assets/style.css
 curl -fsSL "$BASE_URL/web/theme.css" -o assets/theme.css
 curl -fsSL "$BASE_URL/web/dist/abilang.min.js" -o assets/abilang.min.js
 
+# 9. Configure global executables
 echo '#!/usr/bin/env node' | cat - dist/cli.js > temp && mv temp dist/cli.js
 chmod +x dist/cli.js
 
+# Modify interpreter.js components to include standard route/include registration
 node -e '
 const fs = require("fs");
 let content = fs.readFileSync("dist/interpreter.js", "utf8");
@@ -277,14 +393,20 @@ if (!content.includes("globals.define(\"include\"")) {
 }
 '
 
+# Patch app.js: 
+# 1) Make safe fallback if editor element is missing
+# 2) Fix regular expression syntax error (unterminated group) to allow light theme to work
 node -e '
 const fs = require("fs");
 let appJs = fs.readFileSync("assets/app.js", "utf8");
 appJs = appJs.replace("// Initialize Default Template", "if (editor) {\n// Initialize Default Template");
 appJs = appJs.replace("// Inject spinner anim CSS", "}\n\n// Inject spinner anim CSS");
+// Correct the malformed regex syntax error
+appJs = appJs.replace("(\\b[a-zA-Z_][a-zA-Z0-9_]*\\b(?=\\s*\\(()", "(\\b[a-zA-Z_][a-zA-Z0-9_]*\\b(?=\\s*\\())");
 fs.writeFileSync("assets/app.js", appJs, "utf8");
 '
 
+# Mini-minify styling files
 node -e '
 const fs = require("fs");
 ["style.css", "theme.css"].forEach(file => {
@@ -297,5 +419,14 @@ const fs = require("fs");
 });
 '
 
+# Complete dependency link
 npm install --omit=dev
 npm link
+
+echo ""
+echo "============================================="
+echo "AbiLang Project successfully created!"
+echo "Project Path: $(pwd)"
+echo "To start the web server, run:"
+echo "  npm run web"
+echo "============================================="

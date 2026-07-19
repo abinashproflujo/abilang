@@ -17,6 +17,17 @@ body {
     --text-main: #ffffff;
     --text-muted: #b6add3;
     --btn-text: #090014;
+
+    --editor-bg: #272822;
+    --token-comment: #75715E;
+    --token-string: #E6DB74;
+    --token-keyword: #F92672;
+    --token-logical: #F92672;
+    --token-constant: #AE81FF;
+    --token-builtin: #66D9EF;
+    --token-function: #A6E22E;
+    --token-number: #AE81FF;
+    --token-text: #F8F8F2;
 }
 
 body.light-theme {
@@ -32,4 +43,15 @@ body.light-theme {
     --text-main: #23124f;
     --text-muted: #75669f;
     --btn-text: #ffffff;
+
+    --editor-bg: #fdfdfd;
+    --token-comment: #93a1a1;
+    --token-string: #2aa198;
+    --token-keyword: #d33682;
+    --token-logical: #d33682;
+    --token-constant: #b58900;
+    --token-builtin: #268bd2;
+    --token-function: #859900;
+    --token-number: #cb4b16;
+    --token-text: #586e75;
 }
