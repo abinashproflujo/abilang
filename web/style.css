@@ -1298,3 +1298,67 @@ body.light-theme .cmd-desc code {
     opacity: 0.8;
 }
 /* End Loading Screen Styles */
+
+/* --- Copy Button Styling --- */
+.code-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(21, 8, 43, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-muted);
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    z-index: 10;
+}
+
+.copy-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.copy-btn:hover {
+    background: var(--vue-green);
+    color: var(--bg-app);
+    border-color: var(--vue-green);
+    box-shadow: 0 0 10px rgba(123, 255, 0, 0.4);
+}
+
+.copy-btn.copied {
+    background: var(--vue-cyan);
+    color: var(--bg-app);
+    border-color: var(--vue-cyan);
+    box-shadow: 0 0 10px rgba(0, 234, 255, 0.4);
+}
+
+body.light-theme .copy-btn {
+    background: rgba(252, 251, 255, 0.8);
+    color: var(--text-muted);
+}
+
+body.light-theme .copy-btn:hover {
+    background: var(--vue-green);
+    color: #ffffff;
+    border-color: var(--vue-green);
+    box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+
+body.light-theme .copy-btn.copied {
+    background: var(--vue-dark-blue);
+    color: #ffffff;
+    border-color: var(--vue-dark-blue);
+    box-shadow: 0 0 8px rgba(109, 40, 217, 0.3);
+}

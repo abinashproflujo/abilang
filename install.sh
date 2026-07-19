@@ -47,12 +47,8 @@ prompt_user() {
     fi
 }
 
-# 1. Ask for project name (skip prompt if passed as command-line argument)
-if [ -n "$1" ]; then
-    PROJECT_NAME="$1"
-else
-    prompt_user "Enter project name [my-abi-project]: " "my-abi-project" PROJECT_NAME
-fi
+# 1. Ask for project name
+prompt_user "Enter project name [my-abi-project]: " "my-abi-project" PROJECT_NAME
 
 # Create and navigate to the project directory
 mkdir -p "$PROJECT_NAME"
@@ -173,7 +169,7 @@ if [[ "$CREATE_ENV" =~ ^[Yy]$ ]]; then
 fi
 
 # Base repository URL
-BASE_URL="https://raw.githubusercontent.com/abinashmofficial/abilang/master-v1"
+BASE_URL="https://raw.githubusercontent.com/abinashproflujo/abilang/master-v1"
 
 # 3. Create package.json
 cat << EOF > package.json
