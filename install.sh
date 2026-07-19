@@ -47,8 +47,12 @@ prompt_user() {
     fi
 }
 
-# 1. Ask for project name
-prompt_user "Enter project name [my-abi-project]: " "my-abi-project" PROJECT_NAME
+# 1. Ask for project name (skip prompt if passed as command-line argument)
+if [ -n "$1" ]; then
+    PROJECT_NAME="$1"
+else
+    prompt_user "Enter project name [my-abi-project]: " "my-abi-project" PROJECT_NAME
+fi
 
 # Create and navigate to the project directory
 mkdir -p "$PROJECT_NAME"
@@ -195,17 +199,85 @@ for file in cli.js index.js interpreter.js lexer.js parser.js types.js; do
     curl -fsSL "$BASE_URL/dist/$file" -o "dist/$file"
 done
 
-# 5. Download the complete web index.html and update asset paths for view/index.html
-curl -fsSL "$BASE_URL/web/index.html" -o view/index.html
-node -e '
-const fs = require("fs");
-let html = fs.readFileSync("view/index.html", "utf8");
-html = html.replace("href=\"theme.css?v=1.2\"", "href=\"../assets/theme.css?v=1.2\"");
-html = html.replace("href=\"style.css?v=1.2\"", "href=\"../assets/style.css?v=1.2\"");
-html = html.replace("src=\"dist/abilang.min.js?v=1.2\"", "src=\"../assets/abilang.min.js?v=1.2\"");
-html = html.replace("src=\"app.js?v=1.2\"", "src=\"../assets/app.js?v=1.2\"");
-fs.writeFileSync("view/index.html", html, "utf8");
-'
+# 5. Create view/index.html (landing portal only)
+cat << 'EOF' > view/index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AbiLang - The Progressive Scripting Language</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/theme.css?v=1.2">
+    <link rel="stylesheet" href="../assets/style.css?v=1.2">
+</head>
+<body>
+    <canvas id="star-rain-canvas"></canvas>
+    <button id="theme-toggle" class="theme-toggle-floating" title="Toggle Light/Dark Theme">
+        <span id="theme-toggle-icon">☀</span>
+    </button>
+
+    
+    
+    <!-- View State 1: Landing Page Portal -->
+    <div id="portal-view" class="portal-screen">
+        <!-- Navbar Header -->
+        <nav class="portal-nav">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <div class="abi-logo-badge">A</div>
+                    <span class="nav-title">Abi<span>Lang</span></span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Hero Section -->
+        <main class="portal-hero">
+            <div class="hero-container">
+                <div class="hologram-overlay"></div>
+<!-- Custom UI Mockup -->
+<div class="mockup-container" style="text-align:center; margin: 20px 0;">
+  <div class="dash-circle">
+    <div class="dash-text">Abi</div>
+</div>
+</div>
+
+                <div class="tagline-badge">AbiLang v1.1.0 (Cloud Release)</div>
+                <h1 class="hero-title">
+                    The Progressive <br>
+                    <span>Scripting Language</span>
+                </h1>
+                <p class="hero-subtitle">
+                    An approachable, highly performant and versatile scripting language designed for <strong>Abinash</strong>, running natively on all platform engines.
+                </p>
+                <div class="hero-actions">
+                    <button id="launch-btn" class="btn btn-vue-primary">
+                        Get Started
+                        <svg class="icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    <a href="file:///var/www/personal/new-lang/README.md" target="_blank" class="btn btn-vue-secondary">View Docs</a>
+                </div>
+            </div>
+        </main>
+    
+        <!-- Footer -->
+        <footer class="hud-footer">
+            <span><a href="#" id="view-portal-link" style="color: var(--vue-green); text-decoration: none;">View Landing Portal</a></span>
+            <span>Progressive Language Platform</span>
+            <span>Made for Abinash</span>
+        </footer>
+    </div>
+
+    <script src="../assets/abilang.min.js?v=1.2"></script>
+    <script src="../assets/app.js?v=1.2"></script>
+</body>
+</html>
+EOF
 
 # 6. Create custom server.js supporting .env configuration
 cat << 'EOF' > server.js
@@ -305,11 +377,21 @@ async function startServer() {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('Not Found');
     });
-
-    const PORT = process.env.PORT || 8080;
-    server.listen(PORT, '127.0.0.1', () => {
-        console.log(`Server running at http://127.0.0.1:${PORT}/`);
+    let port = parseInt(process.env.PORT || 8080, 10);
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.log(`Port ${port} is already in use. Trying port ${port + 1}...`);
+            port++;
+            server.listen(port, '127.0.0.1');
+        } else {
+            console.error(err);
+            process.exit(1);
+        }
     });
+    server.on('listening', () => {
+        console.log(`Server running at http://127.0.0.1:${port}/`);
+    });
+    server.listen(port, '127.0.0.1');
 }
 
 startServer().catch(err => {
