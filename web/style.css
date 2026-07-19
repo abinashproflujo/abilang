@@ -92,6 +92,8 @@ body.light-theme .theme-toggle-floating:hover {
     position: absolute;
     top: 0; left: 0;
     transition: opacity 0.4s ease, transform 0.4s ease;
+    padding-top: 64px;
+    padding-bottom: 32px;
 }
 
 .portal-screen.glitch-fade-out {
@@ -107,8 +109,10 @@ body.light-theme .theme-toggle-floating:hover {
     height: 64px;
     display: flex;
     align-items: center;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    width: 100%;
     z-index: 100;
 }
 
@@ -418,6 +422,7 @@ body.light-theme .theme-toggle-floating:hover {
     display: grid;
     grid-template-columns: 1fr 1fr;
     min-height: 0;
+    margin-bottom: 32px;
 }
 
 .split-pane {
@@ -1027,6 +1032,11 @@ body.light-theme .phone-screen-init h4 {
     color: var(--text-muted);
     flex-shrink: 0;
     background: var(--bg-app);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
 }
 
 /* --- Responsive Panels --- */

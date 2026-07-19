@@ -190,10 +190,20 @@ cat << EOF > package.json
 }
 EOF
 
-# 4. Download source binary components
-for file in cli.js index.js interpreter.js lexer.js parser.js types.js; do
-    curl -fsSL "$BASE_URL/dist/$file" -o "dist/$file"
-done
+# 4. Download or copy source binary components
+if [ -d "../dist" ]; then
+    for file in cli.js index.js interpreter.js lexer.js parser.js types.js; do
+        if [ -f "../dist/$file" ]; then
+            cp "../dist/$file" "dist/$file"
+        else
+            curl -fsSL "$BASE_URL/dist/$file" -o "dist/$file"
+        fi
+    done
+else
+    for file in cli.js index.js interpreter.js lexer.js parser.js types.js; do
+        curl -fsSL "$BASE_URL/dist/$file" -o "dist/$file"
+    done
+fi
 
 # 5. Create layout components (header, footer, index)
 cat << 'EOF' > view/header.html
@@ -206,8 +216,8 @@ cat << 'EOF' > view/header.html
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/theme.css?v=1.2">
-    <link rel="stylesheet" href="../assets/style.css?v=1.2">
+    <link rel="stylesheet" href="/assets/theme.css?v=1.2">
+    <link rel="stylesheet" href="/assets/style.css?v=1.2">
 </head>
 <body>
     <canvas id="star-rain-canvas"></canvas>
@@ -275,8 +285,8 @@ cat << 'EOF' > view/footer.html
         </footer>
     </div>
 
-    <script src="../assets/abilang.min.js?v=1.2"></script>
-    <script src="../assets/app.js?v=1.2"></script>
+    <script src="/assets/abilang.min.js?v=1.2"></script>
+    <script src="/assets/app.js?v=1.2"></script>
 </body>
 </html>
 EOF
@@ -328,7 +338,12 @@ function renderTemplate(filePath) {
     let content = fs.readFileSync(filePath, 'utf8');
     const includeRegex = /@include\(['"]([^'"]+)['"]\)/g;
     content = content.replace(includeRegex, (match, subPath) => {
-        const includePath = path.resolve(path.dirname(filePath), subPath);
+        let includePath;
+        if (subPath === 'header.html' || subPath === 'footer.html') {
+            includePath = path.resolve(__dirname, 'view', subPath);
+        } else {
+            includePath = path.resolve(path.dirname(filePath), subPath);
+        }
         return renderTemplate(includePath);
     });
     return content;
@@ -434,11 +449,22 @@ include("controller/controller.abi")
 route("get", "/", "controller@index", "home")
 EOF
 
-# 8. Download design assets (CSS, JS, layout etc.)
-curl -fsSL "$BASE_URL/web/app.js" -o assets/app.js
-curl -fsSL "$BASE_URL/web/style.css" -o assets/style.css
-curl -fsSL "$BASE_URL/web/theme.css" -o assets/theme.css
-curl -fsSL "$BASE_URL/web/dist/abilang.min.js" -o assets/abilang.min.js
+# 8. Download or copy design assets (CSS, JS, layout etc.)
+if [ -d "../web" ]; then
+    cp "../web/app.js" assets/app.js
+    cp "../web/style.css" assets/style.css
+    cp "../web/theme.css" assets/theme.css
+    if [ -f "../web/dist/abilang.min.js" ]; then
+        cp "../web/dist/abilang.min.js" assets/abilang.min.js
+    else
+        curl -fsSL "$BASE_URL/web/dist/abilang.min.js" -o assets/abilang.min.js
+    fi
+else
+    curl -fsSL "$BASE_URL/web/app.js" -o assets/app.js
+    curl -fsSL "$BASE_URL/web/style.css" -o assets/style.css
+    curl -fsSL "$BASE_URL/web/theme.css" -o assets/theme.css
+    curl -fsSL "$BASE_URL/web/dist/abilang.min.js" -o assets/abilang.min.js
+fi
 
 # 9. Configure global executables
 echo '#!/usr/bin/env node' | cat - dist/cli.js > temp && mv temp dist/cli.js
