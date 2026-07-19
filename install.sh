@@ -14,9 +14,15 @@ prompt_user() {
     local input_val
     
     if [ -c /dev/tty ]; then
-        read -p "$prompt_msg" input_val < /dev/tty
+        printf "%s" "$prompt_msg" > /dev/tty
+        read -r input_val < /dev/tty
     else
-        read -p "$prompt_msg" input_val || true
+        printf "%s" "$prompt_msg" >&2
+        if read -r input_val; then
+            :
+        else
+            input_val=""
+        fi
     fi
     
     if [ -z "$input_val" ]; then
