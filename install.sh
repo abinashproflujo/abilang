@@ -382,17 +382,7 @@ async function startServer() {
                 const viewFile = await controllerFunc.call(interpreter, []);
                 const filePath = path.join(__dirname, viewFile);
                 if (fs.existsSync(filePath)) {
-                    let content = fs.readFileSync(filePath, 'utf8');
-                    if (!content.trim().toLowerCase().startsWith('<!doctype html>') && !content.trim().toLowerCase().startsWith('<html')) {
-                        const headerPath = path.join(__dirname, 'view/header.html');
-                        const footerPath = path.join(__dirname, 'view/footer.html');
-                        if (fs.existsSync(headerPath)) {
-                            content = fs.readFileSync(headerPath, 'utf8') + content;
-                        }
-                        if (fs.existsSync(footerPath)) {
-                            content = content + fs.readFileSync(footerPath, 'utf8');
-                        }
-                    }
+                    const content = renderTemplate(filePath);
                     res.writeHead(200, { 'Content-Type': 'text/html' });
                     res.end(content);
                     return;
@@ -539,7 +529,7 @@ const fs = require("fs");
 
 # Complete dependency link
 npm install --omit=dev
-npm link
+npm link --force
 
 echo ""
 echo "============================================="
