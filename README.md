@@ -62,7 +62,7 @@ while count <= 5 {
 ### 1. Installation & Setup
 Clone the repository and install the project dependencies:
 ```bash
-git clone https://github.com/abinashproflujo/abilang.git
+git clone https://github.com/abinashmofficial/abilang.git
 cd abilang
 npm install
 ```

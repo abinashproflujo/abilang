@@ -169,7 +169,7 @@ if [[ "$CREATE_ENV" =~ ^[Yy]$ ]]; then
 fi
 
 # Base repository URL
-BASE_URL="https://raw.githubusercontent.com/abinashproflujo/abilang/master-v1"
+BASE_URL="https://raw.githubusercontent.com/abinashmofficial/abilang/master-v1"
 
 # 3. Create package.json
 cat << EOF > package.json
