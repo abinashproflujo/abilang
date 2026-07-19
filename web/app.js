@@ -40,6 +40,14 @@ while count <= 3 {
     print "Value: " + count
     count = count + 1
 }
+
+# 4. Array Sample & Native For-Loop
+print ""
+print "Array iteration using for loop:"
+fruits = ["apple", "banana", "cherry"]
+for fruit in fruits {
+    print "I like " + fruit
+}
 `,
 
     functions: `# AbiLang Functions & Modular Logic

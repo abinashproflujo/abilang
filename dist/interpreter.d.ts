@@ -51,6 +51,7 @@ export declare class Interpreter {
     private executeReturn;
     private executeIf;
     private executeWhile;
+    private executeFor;
     executeBlock(statements: Statement[], env: Environment): Promise<void>;
     private evaluate;
     private evaluateBinary;

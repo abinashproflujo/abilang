@@ -35,6 +35,8 @@ export declare enum TokenType {
     WHILE = "WHILE",
     FUNC = "FUNC",
     RETURN = "RETURN",
+    FOR = "FOR",
+    IN = "IN",
     EOF = "EOF"
 }
 export interface Token {
@@ -44,7 +46,7 @@ export interface Token {
     column: number;
 }
 export type ASTNode = Statement | Expression;
-export type Statement = PrintStatement | VarDeclStatement | IfStatement | WhileStatement | FunctionDeclStatement | ReturnStatement | ExpressionStatement;
+export type Statement = PrintStatement | VarDeclStatement | IfStatement | WhileStatement | ForStatement | FunctionDeclStatement | ReturnStatement | ExpressionStatement;
 export interface PrintStatement {
     type: "PrintStatement";
     expression: Expression;
@@ -66,6 +68,13 @@ export interface IfStatement {
 export interface WhileStatement {
     type: "WhileStatement";
     condition: Expression;
+    body: Statement[];
+    line: number;
+}
+export interface ForStatement {
+    type: "ForStatement";
+    item: string;
+    iterator: Expression;
     body: Statement[];
     line: number;
 }

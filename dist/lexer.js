@@ -15,6 +15,8 @@ class Lexer {
         while: types_1.TokenType.WHILE,
         func: types_1.TokenType.FUNC,
         return: types_1.TokenType.RETURN,
+        for: types_1.TokenType.FOR,
+        in: types_1.TokenType.IN,
         true: types_1.TokenType.BOOLEAN,
         false: types_1.TokenType.BOOLEAN,
         null: types_1.TokenType.NULL,

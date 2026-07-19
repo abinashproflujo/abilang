@@ -45,5 +45,7 @@ var TokenType;
     TokenType["WHILE"] = "WHILE";
     TokenType["FUNC"] = "FUNC";
     TokenType["RETURN"] = "RETURN";
+    TokenType["FOR"] = "FOR";
+    TokenType["IN"] = "IN";
     TokenType["EOF"] = "EOF";
 })(TokenType || (exports.TokenType = TokenType = {}));

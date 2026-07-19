@@ -210,6 +210,9 @@ class Interpreter {
             case "WhileStatement":
                 await this.executeWhile(stmt);
                 break;
+            case "ForStatement":
+                await this.executeFor(stmt);
+                break;
             case "ExpressionStatement":
                 await this.evaluate(stmt.expression);
                 break;
@@ -248,6 +251,17 @@ class Interpreter {
     async executeWhile(stmt) {
         while (this.isTruthy(await this.evaluate(stmt.condition))) {
             await this.executeBlock(stmt.body, new Environment(this.environment));
+        }
+    }
+    async executeFor(stmt) {
+        const iteratorVal = await this.evaluate(stmt.iterator);
+        if (!Array.isArray(iteratorVal)) {
+            throw new Error(`[Runtime Error] Can only iterate over lists at line ${stmt.line}.`);
+        }
+        for (const val of iteratorVal) {
+            const loopEnv = new Environment(this.environment);
+            loopEnv.define(stmt.item, val);
+            await this.executeBlock(stmt.body, loopEnv);
         }
     }
     async executeBlock(statements, env) {

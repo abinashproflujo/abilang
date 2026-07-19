@@ -18,6 +18,7 @@ export declare class Parser {
     private returnStatement;
     private ifStatement;
     private whileStatement;
+    private forStatement;
     private block;
     private expressionStatement;
     private expression;

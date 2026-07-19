@@ -5,6 +5,7 @@ import {
   VarDeclStatement,
   IfStatement,
   WhileStatement,
+  ForStatement,
   FunctionDeclStatement,
   ReturnStatement,
   ExpressionStatement,
@@ -292,6 +293,9 @@ export class Interpreter {
       case "WhileStatement":
         await this.executeWhile(stmt);
         break;
+      case "ForStatement":
+        await this.executeFor(stmt as ForStatement);
+        break;
       case "ExpressionStatement":
         await this.evaluate(stmt.expression);
         break;
@@ -335,6 +339,18 @@ export class Interpreter {
   private async executeWhile(stmt: WhileStatement): Promise<void> {
     while (this.isTruthy(await this.evaluate(stmt.condition))) {
       await this.executeBlock(stmt.body, new Environment(this.environment));
+    }
+  }
+
+  private async executeFor(stmt: ForStatement): Promise<void> {
+    const iteratorVal = await this.evaluate(stmt.iterator);
+    if (!Array.isArray(iteratorVal)) {
+      throw new Error(`[Runtime Error] Can only iterate over lists at line ${stmt.line}.`);
+    }
+    for (const val of iteratorVal) {
+      const loopEnv = new Environment(this.environment);
+      loopEnv.define(stmt.item, val);
+      await this.executeBlock(stmt.body, loopEnv);
     }
   }
 

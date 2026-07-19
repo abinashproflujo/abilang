@@ -58,6 +58,8 @@ class Parser {
             return this.ifStatement();
         if (this.match(types_1.TokenType.WHILE))
             return this.whileStatement();
+        if (this.match(types_1.TokenType.FOR))
+            return this.forStatement();
         if (this.match(types_1.TokenType.FUNC))
             return this.functionDecl();
         if (this.match(types_1.TokenType.RETURN))
@@ -137,6 +139,21 @@ class Parser {
         return {
             type: "WhileStatement",
             condition,
+            body,
+            line
+        };
+    }
+    forStatement() {
+        const line = this.previous().line;
+        const item = this.consume(types_1.TokenType.IDENTIFIER, "Expect loop variable name after 'for'.").value;
+        this.consume(types_1.TokenType.IN, "Expect 'in' after loop variable.");
+        const iterator = this.expression();
+        this.consume(types_1.TokenType.LBRACE, "Expect '{' before loop body.");
+        const body = this.block();
+        return {
+            type: "ForStatement",
+            item,
+            iterator,
             body,
             line
         };
