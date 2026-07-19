@@ -6,6 +6,18 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
+# Helper function to print to terminal
+print_msg() {
+    local msg="$1"
+    if [ -t 1 ]; then
+        echo "$msg"
+    elif [ -c /dev/tty ] && : > /dev/tty 2>/dev/null; then
+        echo "$msg" > /dev/tty
+    else
+        echo "$msg" >&2
+    fi
+}
+
 # Helper function to prompt user for input (handles interactive and non-interactive cases)
 prompt_user() {
     local prompt_msg="$1"
@@ -13,7 +25,10 @@ prompt_user() {
     local result_var="$3"
     local input_val
     
-    if [ -c /dev/tty ]; then
+    if [ -t 0 ]; then
+        printf "%s" "$prompt_msg"
+        read -r input_val
+    elif [ -c /dev/tty ] && : > /dev/tty 2>/dev/null; then
         printf "%s" "$prompt_msg" > /dev/tty
         read -r input_val < /dev/tty
     else
@@ -59,25 +74,14 @@ if [[ "$CREATE_ENV" =~ ^[Yy]$ ]]; then
     DATABASE_URL=""
     
     if [[ "$CONFIGURE_DB" =~ ^[Yy]$ ]]; then
-        if [ -c /dev/tty ]; then
-            echo "" > /dev/tty
-            echo "Select Database Type:" > /dev/tty
-            echo "1) mysql" > /dev/tty
-            echo "2) postgres" > /dev/tty
-            echo "3) mongodb" > /dev/tty
-            echo "4) supabase" > /dev/tty
-            echo "5) sqlite" > /dev/tty
-            echo "6) sqlite3" > /dev/tty
-        else
-            echo ""
-            echo "Select Database Type:"
-            echo "1) mysql"
-            echo "2) postgres"
-            echo "3) mongodb"
-            echo "4) supabase"
-            echo "5) sqlite"
-            echo "6) sqlite3"
-        fi
+        print_msg ""
+        print_msg "Select Database Type:"
+        print_msg "1) mysql"
+        print_msg "2) postgres"
+        print_msg "3) mongodb"
+        print_msg "4) supabase"
+        print_msg "5) sqlite"
+        print_msg "6) sqlite3"
         
         prompt_user "Enter choice (1-6) [3]: " "3" DB_CHOICE
         
